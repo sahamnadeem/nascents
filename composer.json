@@ -1,0 +1,17 @@
+{
+    "name": "asifraza/altorouter",
+    "require": {
+        "altorouter/altorouter": "1.1.0",
+        "ixudra/validation": "1.*",
+        "phpmailer/phpmailer": "^6.0"
+    },
+    "authors": [
+        {
+            "name": "raoasifraza11",
+            "email": "raoasifraza1@hotmail.com"
+        }
+    ],
+    "require-dev": {
+        "phploc/phploc": "^4.0"
+    }
+}
