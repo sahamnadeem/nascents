@@ -19,8 +19,8 @@ class DataBase
                 $strDSN = "mysql:host=$this->DBServer;dbname=$this->DBName";  
                 $username = $this->DBUser;
                 $pass = $this->DBPass;
-                $conn = new PDO($strDSN, $username, $pass);
-                // $conn = new PDO('sqlite:./data.sqlite');
+                // $conn = new PDO($strDSN, $username, $pass);
+                $conn = new PDO('sqlite:./data.sqlite');
                 $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
                 //echo 'connected';
                 return $conn;
