@@ -47,4 +47,18 @@ class Rating
 			echo $e->getMessage();
 		}
 	}
+
+	public static function insert($id, $seller_id, $rating){
+		$db = new DataBase(); 
+		$conn = $db->connect();
+		$counter = 0;
+		try{
+			$stmt = $conn->prepare("INSERT INTO ratings (user_id,seller_id,rating) VALUES ($id, $seller_id, $rating)");
+			echo "INSERT INTO ratings (user_id,seller_id,rating) VALUES ($id, $seller_id, $rating)";
+			$stmt->execute(); 
+			return true;
+		}catch(PDOException $e){
+			return false;
+		}
+	}
 }

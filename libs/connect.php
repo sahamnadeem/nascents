@@ -11,19 +11,23 @@ class DataBase
     public $DBServer = 'localhost';
     public $DBName = 'api_v2';
 
-    public function connect(){
-         try {  
-            $strDSN = "mysql:host=$this->DBServer;dbname=$this->DBName";  
-            $username = $this->DBUser;
-            $pass = $this->DBPass;
-            $conn = new PDO($strDSN, $username, $pass);
-            $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
-            //echo 'connected';
-            return $conn;
-         }   
-        catch (PDOException $e) {  
-            echo 'Error: ' . $e->getMessage();   
-        }  
+    public function connect($sqlite=''){
+        if ($sqlite) {
+            echo "string";
+        }else{
+            try {  
+                $strDSN = "mysql:host=$this->DBServer;dbname=$this->DBName";  
+                $username = $this->DBUser;
+                $pass = $this->DBPass;
+                $conn = new PDO($strDSN, $username, $pass);
+                // $conn = new PDO('sqlite:./data.sqlite');
+                $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+                //echo 'connected';
+                return $conn;
+            }catch (PDOException $e) {  
+                echo 'Error: ' . $e->getMessage();   
+            }
+        }
     }
 }
 ?>

@@ -31,6 +31,10 @@ class SellerController
 						$catagory = Catagory::getbyid($sellers['catagory']);
 						$images = Image::getImgByUser($sellers['id']);
 						$ratings = Rating::getRatingBySeller($sellers['id']);
+						$subcatagory = Catagory::GetSubCat($sellers['id']);
+						if ($subcatagory == false) {
+							$subcatagory = null;
+						}
 						if ($sellers['location']==1) {
 							$location = Location::getlocation($user['id']);
 						}else{
@@ -61,6 +65,7 @@ class SellerController
 							"catagory" => array(
 								"title" => $catagory['title']
 							),
+							"sub_cats"=> $subcatagory,
 							"images" => $images,
 							"reviews" => $ratings,
 							"location" => array(
@@ -138,6 +143,49 @@ class SellerController
 		    echo json_encode($Error);
 		}
 	}
+
+	public static function normalize($sellers, $data){
+		foreach ($sellers as $key => $value) {
+			if ($sellers[$key]['location'] == 1) {
+				$location = Location::getlocation($sellers[$key]['user_id']);
+			}else{
+				$location = Location::getlocationbySel($sellers[$key]['id']);
+			}
+			$sellers[$key]['location'] = array(
+				"lat"=>$location['lat'],
+				"lng"=>$location['lng']
+			);
+			$distance =  SellerController::distance($data['lat'], $data['lng'], $sellers[$key]['location']['lat'], $sellers[$key]['location']['lng'], "K");
+			$ratings = Rating::getRatingBySeller($sellers[$key][0]);
+			$myrates=0;
+			if ($ratings != null) {
+				$counter2 =0;
+				foreach ($ratings as $rkey => $value) {
+					$myrates = $myrates + $ratings[$rkey]['rating'];
+					$counter2++;
+				}
+				$myrates = $myrates/$counter2;
+			}
+			if ($distance <= $data['radious']) {
+				$sellers[$key] = array(
+				"id" => $sellers[$key][0],
+				"title" => $sellers[$key][1],
+				"cover" => $sellers[$key]['cover'],
+				"user" => $sellers[$key]['user_id'],
+				"catagory" => $sellers[$key]['title'],
+				"total_rating" => $myrates,
+				"cover" => $sellers[$key]['cover'],
+				"created_at" => $sellers[$key]['created_at'],
+				"updated_at" => $sellers[$key]['updated_at'],
+				"location" => $sellers[$key]['location']
+				);
+				$localsell[] = $sellers[$key];
+			}
+		}
+		return $localsell;
+	}
+
+	
 	public static function location(){
 		$token = TokenMiddleware::getTokenHeader();
 		if ($token != False) {
@@ -148,54 +196,36 @@ class SellerController
 					$request = json_decode(file_get_contents('php://input'),True);
 					$data = Data::validate($request);
 					$sellers = Seller::Locals($data);
-					$counter = 0;
-					foreach ($sellers as $key => $value) {
-						if ($sellers[$key]['location'] == 1) {
-							$location = Location::getlocation($sellers[$key]['user_id']);
-						}else{
-							$location = Location::getlocationbySel($sellers[$key]['id']);
-						}
-						$sellers[$key]['location'] = array(
-							"lat"=>$location['lat'],
-							"lng"=>$location['lng']
-						);
-						$distance =  SellerController::distance($data['lat'], $data['lng'], $sellers[$key]['location']['lat'], $sellers[$key]['location']['lng'], "K");
-						$ratings = Rating::getRatingBySeller($sellers[$key][0]);
-						$myrates=0;
-						if ($ratings != null) {
-							$counter2 =0;
-							foreach ($ratings as $rkey => $value) {
-								$myrates = $myrates + $ratings[$rkey]['rating'];
-								$counter2++;
-							}
-							$myrates = $myrates/$counter2;
-						}
-						if ($distance <= $data['radious']) {
-							$sellers[$key] = array(
-							"id" => $sellers[$key][0],
-							"title" => $sellers[$key][1],
-							"cover" => $sellers[$key]['cover'],
-							"user" => $sellers[$key]['user_id'],
-							"catagory" => $sellers[$key]['title'],
-							"total_rating" => $myrates,
-							"cover" => $sellers[$key]['cover'],
-							"created_at" => $sellers[$key]['created_at'],
-							"updated_at" => $sellers[$key]['updated_at'],
-							"location" => $sellers[$key]['location']
-							);
-							$localsell[$counter] = $sellers[$key];
-						}
-						$counter++;
+					$variable = Seller::serviceBase($data['catagory']);
+					if ($sellers != null) {
+						$localsell = SellerController::normalize($sellers, $data);
 					}
-					if (isset($localsell)) {
+					if ($variable) {
+						$localsell2 = SellerController::normalize($variable, $data);
+					}
+					if (isset($localsell) && isset($localsell2)) {
+						$resulty = array(
+							"nearest"=>$localsell,
+							"service based" => $localsell2
+						);
+						if (isset($resulty)) {
+							header('Content-Type: application/json');
+					    	http_response_code(200);
+							echo json_encode($resulty);
+						}else{
+							$Error = array('Error'=>'No Nearest Seller Found');
+						    header('Content-Type: application/json');
+						    http_response_code(404);
+						    echo json_encode($Error);
+						}
+					}elseif (!isset($localsell) && isset($localsell2)) {
 						header('Content-Type: application/json');
-				    	http_response_code(200);
-						echo json_encode($localsell);
+					    http_response_code(200);
+						echo json_encode($localsell2);
 					}else{
-						$Error = array('Error'=>'No Nearest Seller Found');
-					    header('Content-Type: application/json');
-					    http_response_code(404);
-					    echo json_encode($Error);
+						header('Content-Type: application/json');
+					    http_response_code(200);
+						echo json_encode($localsell);
 					}
 				}else{
 					$Error = array('Error'=>'No valid user found');
@@ -223,18 +253,23 @@ class SellerController
 			if ($check != False) {
 				$user = User::select($check);
 				if ($user != null) {
-					$sellers = Seller::getmy($params['id']);
+					$sellers = Seller::getbyid($params['id']);
 				    if ($sellers != false) {
-				    	$Suser = User::selectbyId($sellers['id']);
+				    	$Suser = User::selectbyId($sellers['user_id']);
 						$catagory = Catagory::getbyid($sellers['catagory']);
 						$images = Image::getImgByUser($sellers['id']);
 						$ratings = Rating::getRatingBySeller($sellers['id']);
+						$msg = Catagory::GetSubCat($sellers['id']);
+						if ($msg == false) {
+							$msg = null;
+						}
 						if ($sellers['location']==1) {
 							$location = Location::getlocation($user['id']);
 						}else{
 							$location = Location::getlocationbySel($sellers['id']);
 						}
 						if ($ratings != null) {
+							$myrates=null;
 							$counter =0;
 							foreach ($ratings as $key => $value) {
 								$myrates = $myrates + $ratings[$key]['rating'];
@@ -258,6 +293,7 @@ class SellerController
 							"catagory" => array(
 								"title" => $catagory['title']
 							),
+							"sub_cats"=> $msg,
 							"images" => $images,
 							"reviews" => $ratings,
 							"location" => array(

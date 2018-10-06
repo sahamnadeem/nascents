@@ -90,7 +90,6 @@ class Seller
 	}
 	public static function Locals($data){
 		if ($data) {
-			$counter = 0;
 			$sql = "SELECT * FROM seller_info si
 			JOIN catagories ct
 			ON si.catagory = ct.id WHERE ";
@@ -105,10 +104,9 @@ class Seller
 				$stmt= $conn->prepare($sql);
 				$stmt->execute();
 				while ($seller = $stmt->fetch()) {
-					$sellers[$counter] = $seller;
-					$counter++;
+					$sellers[] = $seller;
 				}
-				if ($sellers) {
+				if (isset($sellers)) {
 					return $sellers;
 				}else{
 					return null;
@@ -123,7 +121,68 @@ class Seller
 			}
 		}
 	}
-	public static function getbyid($loc, $rad){
-		
+	public static function getbyid($seller_id){
+		$db = new DataBase(); 
+		$conn = $db->connect();
+		try{
+			$stmt = $conn->prepare("SELECT * FROM seller_info WHERE id=$seller_id");
+			$stmt->execute(); 
+			$seller = $stmt->fetch();
+			if ($seller != null) {
+				return $seller;
+			}else{
+				return False;
+			}
+		}catch(PEOException $e){
+			echo $e->getMessage();
+		}
+	}
+
+
+
+	public static function recomendation($seller_id){
+		$db = new DataBase(); 
+		$conn = $db->connect();
+		try{
+			$stmt = $conn->prepare("SELECT * FROM seller_info si
+			JOIN catagories ct
+			ON si.catagory = ct.id WHERE si.id = $seller_id");
+			$stmt->execute(); 
+			$seller = $stmt->fetch();
+			if ($seller != null) {
+				return $seller;
+			}else{
+				return False;
+			}
+		}catch(PEOException $e){
+			echo $e->getMessage();
+		}
+	}
+
+
+	public static function serviceBase($cat_id){
+		$db = new DataBase(); 
+		$conn = $db->connect();
+		try{
+			$stmt = $conn->prepare("SELECT seller_id FROM seller_cats WHERE cat_id=$cat_id");
+			$stmt->execute(); 
+			while ($seller = $stmt->fetch()) {
+				$sellerdata[] = $seller;
+			}
+			if (isset($sellerdata)) {
+				foreach ($sellerdata as $key => $value) {
+					$gs[] = Seller::recomendation($sellerdata[$key]['seller_id']);
+				}
+				if (isset($gs)) {
+					return $gs;
+				}else{
+					return False;
+				}
+			}else{
+				return False;
+			}
+		}catch(PEOException $e){
+			echo $e->getMessage();
+		}
 	}
 }

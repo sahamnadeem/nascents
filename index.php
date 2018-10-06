@@ -10,6 +10,7 @@ header("Access-Control-Allow-Headers: *");
 session_start();
 ob_start();
 
+
 require 'vendor/altorouter/altorouter/AltoRouter.php';
 require './app/Controllers/ApiControllers/LoginController.php';
 require './app/Controllers/ApiControllers/UserController.php';
@@ -17,11 +18,13 @@ require './app/Controllers/ApiControllers/LocationController.php';
 require './app/Controllers/ApiControllers/SellerController.php';
 require './app/Controllers/ApiControllers/ImgapiController.php';
 require './app/Controllers/ApiControllers/CatagoryController.php';
+require './app/Controllers/ApiControllers/ProductController.php';
+require './app/Controllers/ApiControllers/ReviewController.php';
+require './app/Controllers/ApiControllers/RatingController.php';
 require './app/Controllers/HomeController.php';
 require './app/Controllers/ImageController.php';
 require './app/Controllers/VLoginController.php';
 require './libs/connect.php';
-
 
 
 
@@ -107,17 +110,36 @@ $router->map('POST','/img/upload/', 'ImageController#imgupload', 'img_upload');
 
 $router->map('GET','/catagory/', 'CatagoryController#index', 'catagories');
 $router->map('POST','/seller/catagory/', 'CatagoryController#CreateSellerCats', 's_catagories');
-$router->map('GET','/seller/catagory/', 'CatagoryController#GetSellerCats', 'get_s_catagories');
+$router->map('DELETE','/seller/catagory/[i:id]/', 'CatagoryController#deleteCatagory', 's_del_cat');
+
+
+/*
+*
+* Catagories
+*
+*/
+
+$router->map('POST','/seller/product/', 'ProductController#create', 's_product');
+$router->map('GET','/seller/catagory/[i:id]/product/', 'ProductController#CatProd', 's_get_prod');
+$router->map('GET','/seller/product/', 'ProductController#index', 's_prod');
+$router->map('DELETE','/seller/product/[i:id]/', 'ProductController#delete', 's_del_prod');
+
+/*
+*
+* Creating deleting reviws and ratings 
+*
+*/
+$router->map('POST','/seller/[i:id]/review/', 'ReviewController#create', 'write_review');
+$router->map('POST','/seller/[i:id]/rating/', 'RatingController#create', 'rating');
+$router->map('GET','/output.[xml|json:format]?', 'RatingController#json', 'json');
+
+
+
 
 
 
 // match current request
 $match = $router->match();
-
-
-
-
-
 
 
 

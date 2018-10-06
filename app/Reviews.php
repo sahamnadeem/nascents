@@ -35,5 +35,17 @@ class Reviews
 		}catch(PEOException $e){
 			echo $e->getMessage();
 		}
-	 }
+	}
+	public static function insert($id, $seller_id, $text){
+		$db = new DataBase(); 
+		$conn = $db->connect();
+		$counter = 0;
+		try{
+			$stmt = $conn->prepare("INSERT INTO reviews (user_id,seller_id,review) VALUES ($id, $seller_id, '$text')");
+			$stmt->execute(); 
+			return true;
+		}catch(PDOException $e){
+			return false;
+		}
+	}
 }
